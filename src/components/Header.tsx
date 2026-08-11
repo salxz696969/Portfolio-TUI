@@ -1,23 +1,43 @@
 import React, { useEffect, useState } from "react";
 import { Text } from "ink";
 import Gradient from "ink-gradient";
-import BigText from "ink-big-text";
+import CFonts from "cfonts";
 
-export default function Header() {
-  const [show, setShow] = useState(false);
+const raw = CFonts.render("SAO VISAL", { font: "block" });
+const LINES: string[] = raw ? raw.array : ["SAO VISAL"];
+const HEADER_SPEED = 60;
+
+interface HeaderProps {
+  onDone?: () => void;
+}
+
+export default function Header({ onDone }: HeaderProps) {
+  const [revealed, setRevealed] = useState(0);
+
   useEffect(() => {
-    const t = setTimeout(() => setShow(true), 100);
-    return () => clearTimeout(t);
+    const total = LINES.length + 1;
+    let i = 0;
+    const id = setInterval(() => {
+      i++;
+      setRevealed(i);
+      if (i >= total) {
+        clearInterval(id);
+        onDone?.();
+      }
+    }, HEADER_SPEED);
+    return () => clearInterval(id);
   }, []);
-
-  if (!show) return null;
 
   return (
     <>
       <Gradient name="atlas">
-        <BigText text="SAO VISAL" font="block" />
+        {LINES.slice(0, revealed).map((line: string, i: number) => (
+          <Text key={i}>{line}</Text>
+        ))}
       </Gradient>
-      <Text color="gray">  Full-Stack Developer · Phnom Penh, Cambodia</Text>
+      {revealed > LINES.length && (
+        <Text color="gray">  Full-Stack Developer · Phnom Penh, Cambodia</Text>
+      )}
     </>
   );
 }

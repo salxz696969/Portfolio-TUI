@@ -4,29 +4,38 @@ import { Text } from "ink";
 interface MenuProps {
   items: string[];
   selectedIndex: number;
+  revealed?: number;
 }
 
-export default function Menu({ items, selectedIndex }: MenuProps) {
+const HINTS = ["  ↑↓  navigate", "  esc exit"];
+
+export default function Menu({ items, selectedIndex, revealed = Infinity }: MenuProps) {
+  const all = [...items, "", ...HINTS];
   return (
     <>
-      {items.map((item, i) => {
-        const isSelected = i === selectedIndex;
+      {all.map((item, i) => {
+        if (i >= revealed) return null;
+        if (i < items.length) {
+          const isSelected = i === selectedIndex;
+          return (
+            <Text key={i}>
+              {isSelected ? (
+                <Text color="cyan" bold>
+                  {"  ❯ "}
+                  {item}
+                </Text>
+              ) : (
+                <Text color="gray">{"    "}{item}</Text>
+              )}
+            </Text>
+          );
+        }
         return (
-          <Text key={item}>
-            {isSelected ? (
-              <Text color="cyan" bold>
-                {"  ❯ "}
-                {item}
-              </Text>
-            ) : (
-              <Text color="gray">{"    "}{item}</Text>
-            )}
+          <Text key={i} color="dim">
+            {item}
           </Text>
         );
       })}
-      <Text> </Text>
-      <Text color="dim">  ↑↓  navigate</Text>
-      <Text color="dim">  esc exit</Text>
     </>
   );
 }

@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      cfonts:
+        specifier: ^3.3.1
+        version: 3.3.1
       ink:
         specifier: ^5.2.0
         version: 5.2.1(@types/react@18.3.31)(react@18.3.1)
