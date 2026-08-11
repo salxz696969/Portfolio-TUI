@@ -11,14 +11,13 @@ import type { Icon2x2Colors } from "../components/TechIcon";
 const iconColors = iconColorsRaw as unknown as Record<string, Icon2x2Colors>;
 
 const SKILLS_PER_ROW = 5;
-const GAP = 3;
+const GAP = 5;
 
 function skillLine(skill: Skill): React.ReactNode {
   const colors = iconColors[skill.name];
   return (
     <Box key={skill.name} flexDirection="row" gap={1}>
       {colors ? <TechIcon colors={colors} /> : <Text color={skill.color}>??</Text>}
-      <Text> </Text>
       <Text bold color={skill.color}>{skill.name}</Text>
     </Box>
   );
@@ -41,7 +40,7 @@ export default function Skills({ maxLines }: { maxLines: number }) {
 
     for (const [category, categorySkills] of byCategory) {
       result.push(
-        <Text key={`cat-${category}`} bold color="yellow" underline>
+        <Text key={`cat-${category}`} bold color="white" underline>
           {category}
         </Text>
       );

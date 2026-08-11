@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Text } from "ink";
 import Gradient from "ink-gradient";
+import BigText from "ink-big-text";
 
 export default function Header() {
   const [show, setShow] = useState(false);
@@ -13,19 +14,10 @@ export default function Header() {
 
   return (
     <>
-      <Text>
-        <Text color="cyan">╔════════════════════════════════════════╗</Text>
-      </Text>
-      <Text>
-        <Text color="cyan">║</Text>
-        <Gradient name="atlas">
-          SAO VISAL
-        </Gradient>
-        <Text color="gray"> — full-stack developer</Text>
-      </Text>
-      <Text>
-        <Text color="cyan">╚════════════════════════════════════════╝</Text>
-      </Text>
+      <Gradient name="atlas">
+        <BigText text="SAO VISAL" font="block" />
+      </Gradient>
+      <Text color="gray">  Full-Stack Developer · Phnom Penh, Cambodia</Text>
     </>
   );
 }

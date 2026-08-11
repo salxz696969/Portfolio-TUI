@@ -16,7 +16,7 @@ const screenMap: Record<string, ScreenId> = {
   Contact: "contact",
 };
 
-const HEADER_LINES = 4;
+const HEADER_LINES = 9;
 
 export default function App() {
   const { exit } = useApp();

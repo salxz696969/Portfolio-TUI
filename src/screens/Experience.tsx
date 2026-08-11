@@ -6,34 +6,56 @@ import { experienceEntries } from "../data/content";
 
 export default function Experience() {
   const [stage, setStage] = useState<"loading" | "streaming" | "done">("loading");
+  const [entryIndex, setEntryIndex] = useState(0);
+  const [streamKey, setStreamKey] = useState(0);
+
+  const isLast = entryIndex === experienceEntries.length - 1;
 
   useEffect(() => {
-    const t = setTimeout(() => setStage("streaming"), 200);
+    const t = setTimeout(() => {
+      setStage("streaming");
+      setEntryIndex(0);
+      setStreamKey(0);
+    }, 200);
     return () => clearTimeout(t);
   }, []);
 
+  if (stage === "loading") return <PixelSpinner />;
+
   return (
     <Box flexDirection="column">
-      {stage === "loading" && <PixelSpinner />}
-      {(stage === "streaming" || stage === "done") && (
-        <>
-          <Text bold color="cyan">Experience</Text>
-          <Text> </Text>
-          {experienceEntries.map((entry, i) => (
-            <Box key={i} flexDirection="column" marginBottom={1}>
-              <Text bold color="magenta">{entry.title}</Text>
-              <Text color="gray" italic>{entry.subtitle}</Text>
-              <Text color="yellow">{entry.period}</Text>
-              <Text> </Text>
+      <Text bold color="cyan">Experience</Text>
+      <Text> </Text>
+
+      {experienceEntries.map((e, i) => {
+        if (i > entryIndex) return null;
+
+        return (
+          <Box key={i} flexDirection="column" marginBottom={1}>
+            <Text bold color="magenta">{e.title}</Text>
+            <Text color="gray" italic>{e.subtitle}</Text>
+            <Text color="yellow">{e.period}</Text>
+            <Text> </Text>
+            {i === entryIndex ? (
               <StreamingText
-                text={entry.description}
-                onDone={i === experienceEntries.length - 1 ? () => setStage("done") : undefined}
+                key={streamKey}
+                text={e.description}
+                onDone={() => {
+                  if (isLast) {
+                    setStage("done");
+                  } else {
+                    setEntryIndex((n) => n + 1);
+                    setStreamKey((k) => k + 1);
+                  }
+                }}
               />
-              <Text> </Text>
-            </Box>
-          ))}
-        </>
-      )}
+            ) : (
+              <Text>{e.description}</Text>
+            )}
+            <Text> </Text>
+          </Box>
+        );
+      })}
     </Box>
   );
 }
