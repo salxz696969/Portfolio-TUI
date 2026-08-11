@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import TextInput from "ink-text-input";
-import open from "open";
 
 interface Props {
-  onSubmitted?: () => void;
+  onSubmitted?: (gmailUrl: string) => void;
 }
 
 export default function EmailForm({ onSubmitted }: Props) {
@@ -12,8 +11,7 @@ export default function EmailForm({ onSubmitted }: Props) {
   const handleSubmit = (val: string) => {
     const body = encodeURIComponent(val);
     const url = `https://mail.google.com/mail/?view=cm&fs=1&to=saovisal12192005@gmail.com&su=Portfolio%20Inquiry&body=${body}`;
-    open(url).catch(() => {});
-    onSubmitted?.();
+    onSubmitted?.(url);
   };
 
   return (
