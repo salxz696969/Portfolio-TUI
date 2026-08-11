@@ -46,9 +46,10 @@ export default function Contact() {
                   <Text>
                     {"  "}
                     <Text color="green">✓ Message ready — </Text>
-                    <Text color="cyan" underline>{`\x1b]8;;${gmailUrl}\x1b\\click to email\x1b]8;;\x1b\\`}</Text>
-                    <Text color="dim"> (⌘+click / ctrl+click)</Text>
+                    <Text color="cyan" underline>{`\x1b]8;;${gmailUrl}\x1b\\open gmail\x1b]8;;\x1b\\`}</Text>
                   </Text>
+                  <Text> </Text>
+                  <Text color="dim">  Note: ctrl+click / ⌘+click to open Gmail</Text>
                 </Box>
               )}
             </>
