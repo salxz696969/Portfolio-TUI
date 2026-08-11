@@ -17,9 +17,6 @@ importers:
       ink-gradient:
         specifier: ^3.0.0
         version: 3.0.0(ink@5.2.1(@types/react@18.3.31)(react@18.3.1))
-      ink-text-input:
-        specifier: ^6.0.0
-        version: 6.0.0(ink@5.2.1(@types/react@18.3.31)(react@18.3.1))(react@18.3.1)
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -512,13 +509,6 @@ packages:
     engines: {node: '>=16'}
     peerDependencies:
       ink: '>=4'
-
-  ink-text-input@6.0.0:
-    resolution: {integrity: sha512-Fw64n7Yha5deb1rHY137zHTAbSTNelUKuB5Kkk2HACXEtwIHBCf9OH2tP/LQ9fRYTl1F0dZgbW0zPnZk6FA9Lw==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      ink: '>=5'
-      react: '>=18'
 
   ink@5.2.1:
     resolution: {integrity: sha512-BqcUyWrG9zq5HIwW6JcfFHsIYebJkWWb4fczNah1goUO0vv5vneIlfwuS85twyJ5hYR/y18FlAYUxrO9ChIWVg==}
@@ -1055,13 +1045,6 @@ snapshots:
       ink: 5.2.1(@types/react@18.3.31)(react@18.3.1)
       prop-types: 15.8.1
       strip-ansi: 7.2.0
-
-  ink-text-input@6.0.0(ink@5.2.1(@types/react@18.3.31)(react@18.3.1))(react@18.3.1):
-    dependencies:
-      chalk: 5.6.2
-      ink: 5.2.1(@types/react@18.3.31)(react@18.3.1)
-      react: 18.3.1
-      type-fest: 4.41.0
 
   ink@5.2.1(@types/react@18.3.31)(react@18.3.1):
     dependencies:
