@@ -43,13 +43,9 @@ export default function Contact() {
               </Box>
               {gmailUrl && (
                 <Box marginTop={1} flexDirection="column">
-                  <Text color="green">  ✓ Message ready — open this link:</Text>
-                  <Box marginTop={1} flexDirection="column" borderStyle="round" borderColor="cyan" paddingLeft={1} paddingRight={1}>
-                    <Text color="cyan" underline>{gmailUrl}</Text>
-                  </Box>
+                  <Text>  <Text color="green">✓ Message ready: </Text><Text color="cyan" underline>{gmailUrl}</Text></Text>
                   <Text> </Text>
-                  <Text color="dim">  ctrl+click (⌘+click on Mac) to open the link</Text>
-                  <Text color="dim">  If Gmail doesn't open, email me at: {contactInfo.email}</Text>
+                  <Text color="dim">  Note: ctrl+click / ⌘+click to open Gmail</Text>
                 </Box>
               )}
             </>
