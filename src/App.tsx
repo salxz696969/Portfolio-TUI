@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { Box, Text, useInput, useApp, useStdout } from "ink";
 import Header from "./components/Header";
 import Menu from "./components/Menu";
@@ -8,9 +8,7 @@ import Experience from "./screens/Experience";
 import Contact from "./screens/Contact";
 
 type ScreenId = "about" | "skills" | "experience" | "contact";
-type StartupPhase = "header" | "menu" | "ready";
 const menuItems = ["About Me", "Skills", "Experience", "Contact"];
-const MENU_TOTAL = menuItems.length + 1 + 2; // items + blank + hints
 const screenMap: Record<string, ScreenId> = {
   "About Me": "about",
   Skills: "skills",
@@ -19,14 +17,11 @@ const screenMap: Record<string, ScreenId> = {
 };
 
 const HEADER_LINES = 9;
-const MENU_SPEED = 150;
 
 export default function App() {
   const { exit } = useApp();
   const { stdout } = useStdout();
-  const [startupPhase, setStartupPhase] = useState<StartupPhase>("header");
   const [menuIndex, setMenuIndex] = useState(0);
-  const [menuRevealed, setMenuRevealed] = useState(0);
   const [showExitPrompt, setShowExitPrompt] = useState(false);
   const escRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const screen = screenMap[menuItems[menuIndex]];
@@ -36,22 +31,7 @@ export default function App() {
     return Math.max(5, rows - HEADER_LINES - 1);
   }, [stdout?.rows]);
 
-  useEffect(() => {
-    if (startupPhase !== "menu") return;
-    let i = 0;
-    const id = setInterval(() => {
-      i++;
-      setMenuRevealed(i);
-      if (i >= MENU_TOTAL) {
-        clearInterval(id);
-        setStartupPhase("ready");
-      }
-    }, MENU_SPEED);
-    return () => clearInterval(id);
-  }, [startupPhase]);
-
   useInput((_input, key) => {
-    if (startupPhase !== "ready") return;
     if (key.escape) {
       if (escRef.current) {
         clearTimeout(escRef.current);
@@ -75,36 +55,26 @@ export default function App() {
 
   return (
     <Box flexDirection="column" height={stdout?.rows ?? 24}>
-      <Header onDone={() => setStartupPhase("menu")} />
-      {startupPhase !== "header" && (
-        <>
-          <Box flexDirection="row" marginTop={1} height={contentHeight}>
-            <Box flexDirection="column" marginRight={4} flexShrink={0} width={16}>
-              <Menu
-                items={menuItems}
-                selectedIndex={menuIndex}
-                revealed={startupPhase === "menu" ? menuRevealed : undefined}
-              />
-            </Box>
-            {startupPhase === "ready" && (
-              <Box flexDirection="column" flexGrow={1}>
-                <Box key={menuIndex} flexDirection="column">
-                  {screen === "about" && <About />}
-                  {screen === "skills" && <Skills maxLines={contentHeight} />}
-                  {screen === "experience" && <Experience />}
-                  {screen === "contact" && <Contact />}
-                </Box>
-              </Box>
-            )}
+      <Header />
+      <Box flexDirection="row" marginTop={1} height={contentHeight}>
+        <Box flexDirection="column" marginRight={4} flexShrink={0} width={16}>
+          <Menu items={menuItems} selectedIndex={menuIndex} />
+        </Box>
+        <Box flexDirection="column" flexGrow={1}>
+          <Box key={menuIndex} flexDirection="column">
+            {screen === "about" && <About />}
+            {screen === "skills" && <Skills maxLines={contentHeight} />}
+            {screen === "experience" && <Experience />}
+            {screen === "contact" && <Contact />}
           </Box>
-          {showExitPrompt && (
-            <Box marginTop={1}>
-              <Text color="yellow" bold>
-                {"  Press esc again to exit"}
-              </Text>
-            </Box>
-          )}
-        </>
+        </Box>
+      </Box>
+      {showExitPrompt && (
+        <Box marginTop={1}>
+          <Text color="yellow" bold>
+            {"  Press esc again to exit"}
+          </Text>
+        </Box>
       )}
     </Box>
   );
