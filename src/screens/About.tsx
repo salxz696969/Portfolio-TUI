@@ -20,14 +20,6 @@ export default function About() {
           <Text bold color="cyan">About Me</Text>
           <Text> </Text>
           <StreamingText text={aboutText} onDone={() => setStage("done")} />
-          {stage === "done" && (
-            <>
-              <Text> </Text>
-              <Text color="gray">  ■ Computer Science student at CADT (2024–2027)</Text>
-              <Text color="gray">  ■ Full-stack developer · TypeScript ecosystem</Text>
-              <Text color="gray">  ■ Based in Phnom Penh, Cambodia</Text>
-            </>
-          )}
         </>
       )}
     </Box>
