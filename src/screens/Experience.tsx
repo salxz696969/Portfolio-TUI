@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Box, Text } from "ink";
 import PixelSpinner from "../components/PixelSpinner";
-import StreamingText from "../components/StreamingText";
+import StreamingLines from "../components/StreamingLines";
 import { experienceEntries } from "../data/content";
 
 export default function Experience() {
@@ -12,15 +12,19 @@ export default function Experience() {
     return () => clearTimeout(t);
   }, []);
 
-  const combinedText = useMemo(
-    () =>
-      experienceEntries
-        .map(
-          (e) => `  ${e.title}\n  ${e.subtitle}\n  ${e.period}`
-        )
-        .join("\n\n"),
-    []
-  );
+  const lines = useMemo(() => {
+    const result: React.ReactNode[] = [];
+    for (let i = 0; i < experienceEntries.length; i++) {
+      const e = experienceEntries[i];
+      result.push(<Text key={`t-${i}`} bold color="white">{e.title}</Text>);
+      result.push(<Text key={`s-${i}`} color="gray" italic>{e.subtitle}</Text>);
+      result.push(<Text key={`p-${i}`} color="gray">{e.period}</Text>);
+      if (i < experienceEntries.length - 1) {
+        result.push(" ");
+      }
+    }
+    return result;
+  }, []);
 
   return (
     <Box flexDirection="column">
@@ -29,7 +33,7 @@ export default function Experience() {
         <>
           <Text bold color="cyan">Experience</Text>
           <Text> </Text>
-          <StreamingText text={combinedText} onDone={() => setStage("done")} />
+          <StreamingLines lines={lines} onDone={() => setStage("done")} />
         </>
       )}
     </Box>
