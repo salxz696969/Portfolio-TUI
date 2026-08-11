@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box } from "ink";
+import { Box, Text } from "ink";
 
 const SPEED = 80;
 
@@ -28,9 +28,13 @@ export default function StreamingLines({ lines, onDone }: StreamingLinesProps) {
 
   return (
     <Box flexDirection="column">
-      {lines.slice(0, revealed).map((line, i) => (
-        <React.Fragment key={i}>{line}</React.Fragment>
-      ))}
+      {lines.slice(0, revealed).map((line, i) =>
+        typeof line === "string" ? (
+          <Text key={i}>{line}</Text>
+        ) : (
+          <React.Fragment key={i}>{line}</React.Fragment>
+        )
+      )}
     </Box>
   );
 }

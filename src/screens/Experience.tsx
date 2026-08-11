@@ -20,7 +20,7 @@ export default function Experience() {
       result.push(<Text key={`s-${i}`} color="gray" italic>{e.subtitle}</Text>);
       result.push(<Text key={`p-${i}`} color="gray">{e.period}</Text>);
       if (i < experienceEntries.length - 1) {
-        result.push(" ");
+        result.push(<Text key={`b-${i}`}> </Text>);
       }
     }
     return result;
