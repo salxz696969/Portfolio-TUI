@@ -1,7 +1,8 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { Box, Text, useInput, useApp, useStdout } from "ink";
 import Header from "./components/Header";
 import Menu from "./components/Menu";
+import PixelSpinner from "./components/PixelSpinner";
 import About from "./screens/About";
 import Skills from "./screens/Skills";
 import Experience from "./screens/Experience";
@@ -24,7 +25,13 @@ export default function App() {
   const [menuIndex, setMenuIndex] = useState(0);
   const [showExitPrompt, setShowExitPrompt] = useState(false);
   const escRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [introStage, setIntroStage] = useState<"header" | "ready">("header");
   const screen = screenMap[menuItems[menuIndex]];
+
+  useEffect(() => {
+    const t = setTimeout(() => setIntroStage("ready"), 1200);
+    return () => clearTimeout(t);
+  }, []);
 
   const contentHeight = useMemo(() => {
     const rows = stdout?.rows ?? 24;
@@ -32,6 +39,7 @@ export default function App() {
   }, [stdout?.rows]);
 
   useInput((_input, key) => {
+    if (introStage === "header") return;
     if (key.escape) {
       if (escRef.current) {
         clearTimeout(escRef.current);
@@ -56,19 +64,26 @@ export default function App() {
   return (
     <Box flexDirection="column" height={stdout?.rows ?? 24}>
       <Header />
-      <Box flexDirection="row" marginTop={1} height={contentHeight}>
-        <Box flexDirection="column" marginRight={4} flexShrink={0} width={16}>
-          <Menu items={menuItems} selectedIndex={menuIndex} />
+      {introStage === "header" && (
+        <Box flexDirection="column" height={contentHeight} justifyContent="center" alignItems="flex-start" marginLeft={4}>
+          <PixelSpinner />
         </Box>
-        <Box flexDirection="column" flexGrow={1}>
-          <Box key={menuIndex} flexDirection="column">
-            {screen === "about" && <About />}
-            {screen === "skills" && <Skills maxLines={contentHeight} />}
-            {screen === "experience" && <Experience />}
-            {screen === "contact" && <Contact />}
+      )}
+      {introStage === "ready" && (
+        <Box flexDirection="row" marginTop={1} height={contentHeight}>
+          <Box flexDirection="column" marginRight={4} flexShrink={0} width={16}>
+            <Menu items={menuItems} selectedIndex={menuIndex} />
+          </Box>
+          <Box flexDirection="column" flexGrow={1}>
+            <Box key={menuIndex} flexDirection="column">
+              {screen === "about" && <About />}
+              {screen === "skills" && <Skills maxLines={contentHeight} />}
+              {screen === "experience" && <Experience />}
+              {screen === "contact" && <Contact />}
+            </Box>
           </Box>
         </Box>
-      </Box>
+      )}
       {showExitPrompt && (
         <Box marginTop={1}>
           <Text color="yellow" bold>
