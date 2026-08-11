@@ -25,6 +25,8 @@ export default function Menu({ items, selectedIndex }: MenuProps) {
         );
       })}
       <Text> </Text>
+      <Text> </Text>
+      <Text> </Text>
       <Text color="dim">  ↑↓  navigate</Text>
       <Text color="dim">  esc exit</Text>
     </>
