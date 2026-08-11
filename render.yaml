@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: portfolio-tui
+    runtime: docker
+    repo: https://github.com/salxz696969/Portfolio-TUI
+    branch: main
+    plan: free
+    region: oregon
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
