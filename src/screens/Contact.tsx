@@ -2,16 +2,15 @@ import React, { useEffect, useState } from "react";
 import { Box, Text } from "ink";
 import PixelSpinner from "../components/PixelSpinner";
 import StreamingText from "../components/StreamingText";
+import EmailForm from "../components/EmailForm";
 import { contactInfo } from "../data/content";
-
-const gmailLink =
-  "https://mail.google.com/mail/?view=cm&fs=1&to=saovisal12192005@gmail.com&su=Portfolio%20Inquiry";
 
 const contactText = `  Phone     ${contactInfo.phone}
   Email     ${contactInfo.email}`;
 
 export default function Contact() {
   const [stage, setStage] = useState<"loading" | "streaming" | "done">("loading");
+  const [gmailUrl, setGmailUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setStage("streaming"), 200);
@@ -31,13 +30,27 @@ export default function Contact() {
               <Text>  LinkedIn  <Text color="cyan" underline>{contactInfo.linkedin}</Text></Text>
               <Text>  GitHub    <Text color="cyan" underline>{contactInfo.github}</Text></Text>
               <Text> </Text>
-              <Text color="dim">  Note: ctrl+click / ⌘+click to open links</Text>
+              <Text color="dim">  Note: ctrl + click / ⌘ + click to open</Text>
+              <Text> </Text>
               <Text> </Text>
               <Box marginTop={1} flexDirection="column" borderStyle="round" borderColor="cyan" paddingLeft={1} paddingRight={1} width={60}>
-                <Text>Send me a message via Gmail:</Text>
+                <Text color="gray">Write me a message (enter to send via email):</Text>
                 <Text> </Text>
-                <Text color="cyan" underline>{gmailLink}</Text>
+                <Box flexDirection="row">
+                  <Text color="cyan">{"> "}</Text>
+                  <EmailForm onSubmitted={(url) => setGmailUrl(url)} />
+                </Box>
               </Box>
+              {gmailUrl && (
+                <Box marginTop={1} flexDirection="column">
+                  <Text>
+                    {"  "}
+                    <Text color="green">✓ Message ready — </Text>
+                    <Text color="cyan" underline>{`\x1b]8;;${gmailUrl}\x1b\\click to email\x1b]8;;\x1b\\`}</Text>
+                    <Text color="dim"> (⌘+click / ctrl+click)</Text>
+                  </Text>
+                </Box>
+              )}
             </>
           )}
         </>
