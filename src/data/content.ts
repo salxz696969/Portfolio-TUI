@@ -15,7 +15,7 @@ export const experienceEntries = [
     period: "Apr 2026 – Jul 2026",
   },
   {
-    title: "Next-Gen Engagement Program",
+    title: "Next-Gen Engagement Program - Batch II",
     subtitle: "Batch Trainer and Project Contributor",
     period: "Aug 2025 – Sep 2025",
   },
