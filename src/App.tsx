@@ -69,13 +69,19 @@ export default function App() {
           </Box>
         </Box>
       </Box>
-      {showExitPrompt && (
-        <Box marginTop={1}>
-          <Text color="yellow" bold>
-            {"  Press esc again to exit"}
-          </Text>
+      <Box flexDirection="column">
+        {showExitPrompt && (
+          <Box>
+            <Text color="yellow" bold>
+              {"  Press esc again to exit"}
+            </Text>
+          </Box>
+        )}
+        <Box>
+          <Text color="dim">It runs on free server, sorry it is a bit slow.</Text>
+          <Text color="dim">  無料サーバーを使用しているため、少し遅いです。すみません。</Text>
         </Box>
-      )}
+      </Box>
     </Box>
   );
 }
