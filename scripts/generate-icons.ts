@@ -16,7 +16,7 @@ import { skills } from "../src/data/skills";
 import { ICON_COLS, ICON_ROWS } from "../src/data/iconSize";
 
 const deviconDir = join(dirname(createRequire(import.meta.url).resolve("devicon/package.json")), "icons");
-const PNG_SIZE = 64;
+const PNG_SIZE = 32;
 // Terminal background the art is blended against (matches ttyd theme).
 const BG: RGB = [13, 17, 23];
 

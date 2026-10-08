@@ -56,10 +56,12 @@ export const experienceGroups: { label: string; entries: ExperienceEntry[] }[] =
       {
         title: "Next-Gen Engagement Program – Batch III",
         subtitle: "Mentor",
+        period: "Aug 2026 – Sep 2026",
       },
       {
         title: "AI in Motion (AIM)",
         subtitle: "Technical Coach",
+        period: "30 Aug 2026 · 1 week",
       },
       {
         title: "Next-Gen Engagement Program – Batch II",

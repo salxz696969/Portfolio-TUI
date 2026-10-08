@@ -36,7 +36,7 @@ src/
   data/
     content.ts    # profile, about text, experience groups, projects, contact info
     skills.ts     # Skill[] with devicon logo name, grouped by category
-    iconSize.ts   # cells per icon (4×2)
+    iconSize.ts   # cells per icon (2×1)
     icons.generated.json  # per skill: PNG + quadrant-block art — `pnpm generate:icons`
 scripts/
   generate-icons.ts      # builds icons.generated.json from the devicon package (sharp)
