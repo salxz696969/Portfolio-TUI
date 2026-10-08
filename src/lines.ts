@@ -9,6 +9,10 @@ export interface Span {
   bold?: boolean;
   italic?: boolean;
   dim?: boolean;
+  /** Name of a skill icon to draw as a real image over this span's (blank) cells. */
+  image?: string;
+  /** Blank cells covered by an image drawn from a line above. */
+  underImage?: boolean;
 }
 export type Line = Span[];
 

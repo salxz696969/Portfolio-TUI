@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { Box, useApp, useInput } from "ink";
 import Header, { headerHeight } from "./components/Header";
 import Menu from "./components/Menu";
@@ -22,6 +22,7 @@ const screens = [
 const menuItems = screens.map((s) => s.label);
 
 const SIDEBAR_WIDTH = 15;
+const CONTENT_MARGIN = 2;
 const EXIT_PROMPT_MS = 3000;
 
 export default function App() {
@@ -73,7 +74,8 @@ export default function App() {
   const header = headerHeight(columns, height);
   const bodyHeight = Math.max(5, height - header - 1);
   const contentWidth = Math.max(20, columns - SIDEBAR_WIDTH - 4);
-  const props = { width: contentWidth, height: bodyHeight };
+  const origin = useMemo(() => ({ x: SIDEBAR_WIDTH + CONTENT_MARGIN, y: header }), [header]);
+  const props = { width: contentWidth, height: bodyHeight, origin };
 
   // Clicking a menu item opens that screen.
   const onMouse = useCallback(
@@ -104,7 +106,7 @@ export default function App() {
         >
           <Menu items={menuItems} selectedIndex={menuIndex} />
         </Box>
-        <Box key={screen} flexDirection="column" marginLeft={2} flexGrow={1}>
+        <Box key={screen} flexDirection="column" marginLeft={CONTENT_MARGIN} flexGrow={1}>
           {screen === "about" && <About {...props} />}
           {screen === "experience" && <Experience {...props} />}
           {screen === "projects" && <Projects {...props} />}

@@ -15,6 +15,8 @@ RUN chmod +x /usr/local/bin/ttyd
 WORKDIR /app
 COPY --from=build /app/dist/main.js ./main.js
 ENV NODE_ENV=production
+# ttyd's image addon (enableSixel) can show real logo images; tell the app.
+ENV PORTFOLIO_ICONS=image
 
 EXPOSE 7681
 # Each browser tab gets its own process; running the prebuilt bundle with
@@ -22,6 +24,7 @@ EXPOSE 7681
 CMD ["ttyd", "-W", "-p", "7681", \
      "-t", "titleFixed=Sao Visal · Portfolio", \
      "-t", "fontSize=15", \
+     "-t", "enableSixel=true", \
      "-t", "disableLeaveAlert=true", \
      "-t", "disableResizeOverlay=true", \
      "-t", "theme={\"background\":\"#0d1117\"}", \

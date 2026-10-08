@@ -2,25 +2,25 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { lineLength, sliceLine, type Line } from "../lines";
 import { useMouse, type MouseEvent } from "../mouse";
+import { setImagePlacements, type Placement } from "../images";
+import { ICON_ROWS } from "../data/iconSize";
 import { theme } from "../theme";
 
-// Every visit plays a Claude Code–style "thinking" spinner, then streams the
-// visible text in. Streaming takes ~STREAM_TICKS ticks regardless of length.
-const SPINNER_MS = 320;
-const SPINNER_FRAME_MS = 80;
-const TICK_MS = 20;
-const STREAM_TICKS = 22;
+// Each visit streams the visible text in. Lines type in parallel, each one
+// starting LINE_STAGGER_MS after the previous, at CHARS_PER_MS. Progress is
+// computed from elapsed time, so the speed stays even when frames are late.
+const CHARS_PER_MS = 0.4;
+const LINE_STAGGER_MS = 18;
+const FRAME_MS = 16;
 const WHEEL_LINES = 2;
-
-const SPINNER = ["·", "✢", "✳", "✶", "✻", "✽", "✻", "✶", "✳", "✢"];
 
 interface ScreenViewProps {
   title: string;
-  /** Spinner text, e.g. "Recalling". */
-  verb: string;
   lines: Line[];
   width: number;
   height: number;
+  /** Screen cell of this view's top-left corner, for placing images. */
+  origin: { x: number; y: number };
   /** Disable j/k scrolling, e.g. while a text input owns the keyboard. */
   scrollKeys?: boolean;
   /** Rendered under the lines once streaming is done; not scrolled. */
@@ -29,10 +29,10 @@ interface ScreenViewProps {
 
 export default function ScreenView({
   title,
-  verb,
   lines,
   width,
   height,
+  origin,
   scrollKeys = true,
   footer,
 }: ScreenViewProps) {
@@ -40,34 +40,29 @@ export default function ScreenView({
   const overflow = lines.length > bodyHeight;
   const maxScroll = Math.max(0, lines.length - bodyHeight);
 
-  const [frame, setFrame] = useState<number | null>(0);
-  const [chars, setChars] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
   const [scroll, setScroll] = useState(0);
-
   const visibleLines = lines.slice(scroll, scroll + bodyHeight);
-  const total = visibleLines.reduce((n, l) => n + lineLength(l), 0);
-  const done = chars === Infinity;
+
+  const lineDone = (i: number) => (elapsed - i * LINE_STAGGER_MS) * CHARS_PER_MS;
+  const done = elapsed === Infinity;
 
   useEffect(() => {
-    const spin = setInterval(() => setFrame((f) => (f === null ? f : f + 1)), SPINNER_FRAME_MS);
-    let stream: ReturnType<typeof setInterval> | undefined;
-    const start = setTimeout(() => {
-      clearInterval(spin);
-      setFrame(null);
-      const step = Math.max(4, Math.ceil(total / STREAM_TICKS));
-      stream = setInterval(() => {
-        setChars((c) => {
-          if (c + step < total) return c + step;
-          clearInterval(stream);
-          return Infinity;
-        });
-      }, TICK_MS);
-    }, SPINNER_MS);
-    return () => {
-      clearInterval(spin);
-      clearTimeout(start);
-      clearInterval(stream);
-    };
+    const start = Date.now();
+    const finish = Math.max(
+      0,
+      ...visibleLines.map((l, i) => i * LINE_STAGGER_MS + lineLength(l) / CHARS_PER_MS)
+    );
+    const id = setInterval(() => {
+      const t = Date.now() - start;
+      if (t >= finish) {
+        clearInterval(id);
+        setElapsed(Infinity);
+      } else {
+        setElapsed(t);
+      }
+    }, FRAME_MS);
+    return () => clearInterval(id);
   }, []);
 
   useEffect(() => {
@@ -98,16 +93,42 @@ export default function ScreenView({
   );
   useMouse(onMouse, overflow && done);
 
+  // Draw real images over the blank cells reserved for them, once the text
+  // has settled. Skip images that would be cut off by the viewport.
+  useEffect(() => {
+    if (!done) return;
+    const placements: Placement[] = [];
+    visibleLines.forEach((line, i) => {
+      if (i + ICON_ROWS > bodyHeight) return;
+      let x = 0;
+      for (const s of line) {
+        if (s.image) placements.push({ name: s.image, x: origin.x + x, y: origin.y + 2 + i });
+        x += s.text.length;
+      }
+    });
+    setImagePlacements(placements);
+  }, [done, scroll, lines, bodyHeight, origin.x, origin.y]);
+  useEffect(() => () => setImagePlacements([]), []);
+
   const rule = "─".repeat(Math.max(0, width - title.length - 1));
 
-  // While streaming, show the first `chars` characters of the viewport.
-  let budget = done ? Infinity : chars;
-  const shown: Line[] = [];
-  for (const line of visibleLines) {
-    if (budget <= 0) break;
-    shown.push(sliceLine(line, budget));
-    budget -= Math.max(1, lineLength(line));
-  }
+  // Ink skips rewriting rows whose text didn't change, and only rewritten
+  // cells lose an image. The blank cells under images spell the line's index
+  // in normal spaces and Braille blanks (U+2800) — both look empty and are one
+  // column wide — so moving or leaving those rows always rewrites them and
+  // clears the old image.
+  const encodeBlank = (line: Line, index: number): Line => {
+    let bit = 0;
+    return line.map((s) =>
+      s.image || s.underImage
+        ? { ...s, text: [...s.text].map(() => ((index >> bit++ % 16) & 1 ? "\u2800" : " ")).join("") }
+        : s
+    );
+  };
+
+  const shown = (done ? visibleLines : visibleLines.map((l, i) => sliceLine(l, lineDone(i)))).map((l, i) =>
+    encodeBlank(l, scroll + i + 1)
+  );
 
   return (
     <Box flexDirection="column" width={width} height={height}>
@@ -116,40 +137,33 @@ export default function ScreenView({
         <Text color={theme.muted} dimColor>{" " + rule}</Text>
       </Text>
       <Text> </Text>
-      {frame !== null ? (
-        <Text>
-          <Text color={theme.claude}>{SPINNER[frame % SPINNER.length]} </Text>
-          <Text color={theme.claude}>{verb}…</Text>
-        </Text>
-      ) : (
-        <Box flexDirection="row">
-          <Box flexDirection="column" width={overflow ? width - 2 : width}>
-            {shown.map((line, i) => (
-              <Text key={scroll + i} wrap="truncate">
-                {line.length === 0
-                  ? " "
-                  : line.map((s, j) => (
-                      <Text
-                        key={j}
-                        color={s.color}
-                        backgroundColor={s.bg}
-                        bold={s.bold}
-                        italic={s.italic}
-                        dimColor={s.dim}
-                      >
-                        {s.text}
-                      </Text>
-                    ))}
-              </Text>
-            ))}
-          </Box>
-          {overflow && done && (
-            <Box flexDirection="column" marginLeft={1}>
-              <Scrollbar height={bodyHeight} offset={scroll} total={lines.length} />
-            </Box>
-          )}
+      <Box flexDirection="row">
+        <Box flexDirection="column" width={overflow ? width - 2 : width}>
+          {shown.map((line, i) => (
+            <Text key={scroll + i} wrap="truncate">
+              {line.length === 0
+                ? " "
+                : line.map((s, j) => (
+                    <Text
+                      key={j}
+                      color={s.color}
+                      backgroundColor={s.bg}
+                      bold={s.bold}
+                      italic={s.italic}
+                      dimColor={s.dim}
+                    >
+                      {s.text}
+                    </Text>
+                  ))}
+            </Text>
+          ))}
         </Box>
-      )}
+        {overflow && done && (
+          <Box flexDirection="column" marginLeft={1}>
+            <Scrollbar height={bodyHeight} offset={scroll} total={lines.length} />
+          </Box>
+        )}
+      </Box>
       {done && footer}
     </Box>
   );

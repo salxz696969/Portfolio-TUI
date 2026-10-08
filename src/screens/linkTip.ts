@@ -1,8 +1,4 @@
 import { span, type Line } from "../lines";
 
-/** Highlighted hint shown under clickable links. */
-export const linkTip: Line = [
-  span(" TIP ", { bg: "yellow", color: "black", bold: true }),
-  span(" Click a link to open it ", { color: "yellow", bold: true }),
-  span("(ctrl/⌘ + click in a local terminal)", { color: "yellow", dim: true }),
-];
+/** Hint shown under clickable links. */
+export const linkTip: Line = [span("  ctrl/⌘ + click a link to open it", { color: "#A8A8A8" })];

@@ -5,7 +5,7 @@ import { span, type Line } from "../lines";
 import { theme } from "../theme";
 import type { ScreenProps } from "./types";
 
-export default function Experience({ width, height }: ScreenProps) {
+export default function Experience({ width, height, origin }: ScreenProps) {
   const rowWidth = Math.min(width - 2, 80);
   const lines: Line[] = [];
 
@@ -31,5 +31,5 @@ export default function Experience({ width, height }: ScreenProps) {
     });
   });
 
-  return <ScreenView title="Experience" verb="Recalling" lines={lines} width={width} height={height} />;
+  return <ScreenView title="Experience" lines={lines} width={width} height={height} origin={origin} />;
 }

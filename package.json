@@ -7,7 +7,8 @@
     "start": "tsx src/main.tsx",
     "build": "esbuild src/main.tsx --bundle --platform=node --format=esm --target=node22 --minify --outfile=dist/main.js --define:process.env.NODE_ENV='\"production\"' --alias:react-devtools-core=./scripts/devtools-stub.js --banner:js=\"import{createRequire}from'module';const require=createRequire(import.meta.url);\"",
     "start:prod": "node dist/main.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "generate:icons": "tsx scripts/generate-icons.ts"
   },
   "dependencies": {
     "ink": "^7.1.1",
@@ -18,7 +19,9 @@
   "devDependencies": {
     "@types/node": "^26.1.2",
     "@types/react": "^19.3.0",
+    "devicon": "2.17.0",
     "esbuild": "^0.28.2",
+    "sharp": "^0.35.5",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0"
   }

@@ -5,7 +5,7 @@ import { span, wrapText, type Line } from "../lines";
 import { theme } from "../theme";
 import type { ScreenProps } from "./types";
 
-export default function About({ width, height }: ScreenProps) {
+export default function About({ width, height, origin }: ScreenProps) {
   const textWidth = Math.min(width, 76);
   const lines: Line[] = [];
 
@@ -19,5 +19,5 @@ export default function About({ width, height }: ScreenProps) {
     lines.push([span("  " + label.padEnd(10), { color: theme.accent }), span(value)]);
   }
 
-  return <ScreenView title="About Me" verb="Introducing" lines={lines} width={width} height={height} />;
+  return <ScreenView title="About Me" lines={lines} width={width} height={height} origin={origin} />;
 }

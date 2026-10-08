@@ -25,7 +25,7 @@ const rows: [string, string][] = [
 /** OSC 8 hyperlink: shows `label`, opens `url` (the Gmail URL is too long to print). */
 const osc8 = (url: string, label: string) => `\x1b]8;;${url}\x07${label}\x1b]8;;\x07`;
 
-export default function Contact({ width, height, draft, onDraftChange, gmailUrl, onSubmit }: ContactProps) {
+export default function Contact({ width, height, origin, draft, onDraftChange, gmailUrl, onSubmit }: ContactProps) {
   const lines: Line[] = rows.map(([label, value]) => [
     span("  " + label.padEnd(10), { color: theme.accent }),
     span(value),
@@ -61,10 +61,10 @@ export default function Contact({ width, height, draft, onDraftChange, gmailUrl,
   return (
     <ScreenView
       title="Contact"
-      verb="Connecting"
       lines={lines}
       width={width}
       height={height}
+      origin={origin}
       scrollKeys={false}
       footer={footer}
     />

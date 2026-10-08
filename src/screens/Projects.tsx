@@ -6,7 +6,7 @@ import { theme } from "../theme";
 import { linkTip } from "./linkTip";
 import type { ScreenProps } from "./types";
 
-export default function Projects({ width, height }: ScreenProps) {
+export default function Projects({ width, height, origin }: ScreenProps) {
   const textWidth = Math.min(width - 4, 76);
   const lines: Line[] = [];
 
@@ -19,5 +19,5 @@ export default function Projects({ width, height }: ScreenProps) {
   });
   lines.push([], linkTip);
 
-  return <ScreenView title="Projects" verb="Compiling" lines={lines} width={width} height={height} />;
+  return <ScreenView title="Projects" lines={lines} width={width} height={height} origin={origin} />;
 }
