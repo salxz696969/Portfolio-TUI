@@ -1,48 +1,39 @@
 import React from "react";
-import { Box, Text } from "ink";
 import ScreenView from "../components/ScreenView";
-import TechIcon from "../components/TechIcon";
-import iconColorsRaw from "../data/techIconColors.json";
-import { getSkillsByCategory } from "../data/skills";
-import type { Skill } from "../data/skills";
-import type { Icon2x2Colors } from "../components/TechIcon";
+import { getSkillsByCategory, type Skill } from "../data/skills";
+import { span, type Line, type Span } from "../lines";
 import { theme } from "../theme";
 import type { ScreenProps } from "./types";
 
-const iconColors = iconColorsRaw as unknown as Record<string, Icon2x2Colors>;
+// Fixed cell width so skills line up across rows and categories.
+const CELL = 20;
 
-const GAP = 4;
-// Fixed column width so skills line up across rows and categories.
-const CELL = 16;
-
-function SkillCell({ skill }: { skill: Skill }) {
-  const c = skill.color;
-  return (
-    <Box width={CELL} gap={1}>
-      <TechIcon colors={iconColors[skill.name] ?? [c, c, c, c]} />
-      <Text bold color={skill.color}>{skill.name}</Text>
-    </Box>
-  );
+/** Black or white text, whichever reads better on `hex`. */
+function textOn(hex: string) {
+  const n = parseInt(hex.slice(1), 16);
+  const [r, g, b] = [n >> 16, (n >> 8) & 255, n & 255];
+  return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? "#000000" : "#FFFFFF";
 }
 
-export default function Skills({ width, height, animate }: ScreenProps) {
-  const perRow = Math.max(1, Math.floor((width - 2 + GAP) / (CELL + GAP)));
-  const lines: React.ReactNode[] = [];
+function cell(skill: Skill): Span[] {
+  return [
+    span(` ${skill.badge} `, { bg: skill.color, color: textOn(skill.color), bold: true }),
+    span(" " + skill.name.padEnd(CELL - 5)),
+  ];
+}
+
+export default function Skills({ width, height }: ScreenProps) {
+  const perRow = Math.max(1, Math.floor((width - 3) / CELL));
+  const lines: Line[] = [];
 
   for (const [category, categorySkills] of getSkillsByCategory()) {
     if (categorySkills.length === 0) continue;
-    if (lines.length > 0) lines.push("");
-    lines.push(<Text bold color={theme.heading}>{category}</Text>);
+    if (lines.length > 0) lines.push([]);
+    lines.push([span(category, { bold: true, color: theme.heading })]);
     for (let i = 0; i < categorySkills.length; i += perRow) {
-      lines.push(
-        <Box gap={GAP} paddingLeft={1}>
-          {categorySkills.slice(i, i + perRow).map((s) => (
-            <SkillCell key={s.name} skill={s} />
-          ))}
-        </Box>
-      );
+      lines.push([span(" "), ...categorySkills.slice(i, i + perRow).flatMap(cell)]);
     }
   }
 
-  return <ScreenView title="Skills" lines={lines} width={width} height={height} animate={animate} />;
+  return <ScreenView title="Skills" verb="Loading skills" lines={lines} width={width} height={height} />;
 }

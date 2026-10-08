@@ -2,9 +2,10 @@ import React from "react";
 import { Box, Text } from "ink";
 import ScreenView from "../components/ScreenView";
 import EmailForm from "../components/EmailForm";
-import Link from "../components/Link";
 import { contactInfo } from "../data/content";
+import { span, type Line } from "../lines";
 import { theme } from "../theme";
+import { linkTip } from "./linkTip";
 import type { ScreenProps } from "./types";
 
 interface ContactProps extends ScreenProps {
@@ -14,21 +15,22 @@ interface ContactProps extends ScreenProps {
   onSubmit: (url: string) => void;
 }
 
-const rows: [label: string, value: string, url?: string][] = [
-  ["Phone", contactInfo.phone, `tel:${contactInfo.phone.replace(/\s/g, "")}`],
-  ["Email", contactInfo.email, `mailto:${contactInfo.email}`],
-  ["LinkedIn", contactInfo.linkedin, contactInfo.linkedin],
-  ["GitHub", contactInfo.github, contactInfo.github],
+const rows: [string, string][] = [
+  ["Phone", contactInfo.phone],
+  ["Email", contactInfo.email],
+  ["LinkedIn", contactInfo.linkedin],
+  ["GitHub", contactInfo.github],
 ];
 
-export default function Contact({ width, height, animate, draft, onDraftChange, gmailUrl, onSubmit }: ContactProps) {
-  const lines: React.ReactNode[] = rows.map(([label, value, url]) => (
-    <Box>
-      <Text color={theme.accent}>{"  " + label.padEnd(10)}</Text>
-      {url ? <Link url={url} wrap="truncate">{value}</Link> : <Text>{value}</Text>}
-    </Box>
-  ));
-  lines.push("", <Text color={theme.muted} dimColor>{"  ctrl/⌘ + click a link to open it"}</Text>);
+/** OSC 8 hyperlink: shows `label`, opens `url` (the Gmail URL is too long to print). */
+const osc8 = (url: string, label: string) => `\x1b]8;;${url}\x07${label}\x1b]8;;\x07`;
+
+export default function Contact({ width, height, draft, onDraftChange, gmailUrl, onSubmit }: ContactProps) {
+  const lines: Line[] = rows.map(([label, value]) => [
+    span("  " + label.padEnd(10), { color: theme.accent }),
+    span(value),
+  ]);
+  lines.push([], linkTip);
 
   const footer = (
     <Box flexDirection="column" marginTop={1}>
@@ -48,9 +50,9 @@ export default function Contact({ width, height, animate, draft, onDraftChange, 
       {gmailUrl && (
         <Box marginTop={1} paddingLeft={2}>
           <Text color={theme.success}>✓ Draft ready → </Text>
-          <Link url={gmailUrl} color={theme.accent} underline>
-            open it in Gmail
-          </Link>
+          <Text color={theme.accent} underline bold>
+            {osc8(gmailUrl, "click here to open it in Gmail")}
+          </Text>
         </Box>
       )}
     </Box>
@@ -59,10 +61,10 @@ export default function Contact({ width, height, animate, draft, onDraftChange, 
   return (
     <ScreenView
       title="Contact"
+      verb="Connecting"
       lines={lines}
       width={width}
       height={height}
-      animate={animate}
       scrollKeys={false}
       footer={footer}
     />

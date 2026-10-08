@@ -9,6 +9,7 @@ import Projects from "./screens/Projects";
 import Skills from "./screens/Skills";
 import Contact from "./screens/Contact";
 import { useTerminalSize } from "./hooks/useTerminalSize";
+import { useMouse, type MouseEvent } from "./mouse";
 import { theme } from "./theme";
 
 const screens = [
@@ -29,14 +30,10 @@ export default function App() {
   const [menuIndex, setMenuIndex] = useState(0);
   const [showExitPrompt, setShowExitPrompt] = useState(false);
   const exitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const visited = useRef(new Set<string>());
   const [draft, setDraft] = useState("");
   const [gmailUrl, setGmailUrl] = useState<string | null>(null);
 
   const screen = screens[menuIndex].id;
-  // Animate a screen only the first time it is opened.
-  const animate = !visited.current.has(screen);
-  visited.current.add(screen);
 
   const onSubmit = useCallback((url: string) => {
     setGmailUrl(url);
@@ -76,7 +73,19 @@ export default function App() {
   const header = headerHeight(columns, height);
   const bodyHeight = Math.max(5, height - header - 1);
   const contentWidth = Math.max(20, columns - SIDEBAR_WIDTH - 4);
-  const props = { width: contentWidth, height: bodyHeight, animate };
+  const props = { width: contentWidth, height: bodyHeight };
+
+  // Clicking a menu item opens that screen.
+  const onMouse = useCallback(
+    (e: MouseEvent) => {
+      const item = e.y - header;
+      if (e.type === "click" && e.x < SIDEBAR_WIDTH && item >= 0 && item < screens.length) {
+        setMenuIndex(item);
+      }
+    },
+    [header]
+  );
+  useMouse(onMouse);
 
   return (
     <Box flexDirection="column" width={columns} height={height}>

@@ -29,7 +29,8 @@ function Footer({ columns, exitPrompt }: { columns: number; exitPrompt: boolean 
         {"  "}
         <Key k="↑↓" label="navigate" />
         <Key k="1-5" label="jump" />
-        <Key k="j/k" label="scroll" />
+        <Key k="wheel/j/k" label="scroll" />
+        <Key k="click" label="menu" />
         <Key k="esc" label="quit" />
       </Text>
       {columns >= 100 && <Text color={theme.muted} dimColor>{note + " "}</Text>}

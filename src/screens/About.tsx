@@ -1,28 +1,23 @@
 import React from "react";
-import { Text } from "ink";
-import ScreenView, { wrapText } from "../components/ScreenView";
+import ScreenView from "../components/ScreenView";
 import { aboutParagraphs, quickFacts } from "../data/content";
+import { span, wrapText, type Line } from "../lines";
 import { theme } from "../theme";
 import type { ScreenProps } from "./types";
 
-export default function About({ width, height, animate }: ScreenProps) {
+export default function About({ width, height }: ScreenProps) {
   const textWidth = Math.min(width, 76);
-  const lines: React.ReactNode[] = [];
+  const lines: Line[] = [];
 
   aboutParagraphs.forEach((p, i) => {
-    if (i > 0) lines.push("");
-    lines.push(...wrapText(p, textWidth));
+    if (i > 0) lines.push([]);
+    for (const l of wrapText(p, textWidth)) lines.push([span(l)]);
   });
 
-  lines.push("");
+  lines.push([]);
   for (const [label, value] of quickFacts) {
-    lines.push(
-      <Text>
-        <Text color={theme.accent}>{"  " + label.padEnd(10)}</Text>
-        <Text>{value}</Text>
-      </Text>
-    );
+    lines.push([span("  " + label.padEnd(10), { color: theme.accent }), span(value)]);
   }
 
-  return <ScreenView title="About Me" lines={lines} width={width} height={height} animate={animate} />;
+  return <ScreenView title="About Me" verb="Introducing" lines={lines} width={width} height={height} />;
 }

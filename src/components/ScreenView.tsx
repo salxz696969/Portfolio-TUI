@@ -1,32 +1,38 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
-import PixelSpinner from "./PixelSpinner";
+import { lineLength, sliceLine, type Line } from "../lines";
+import { useMouse, type MouseEvent } from "../mouse";
 import { theme } from "../theme";
 
-// Spinner duration before content appears, and ms between revealed lines.
-// Only the first visit to a screen animates; revisits render instantly.
-const SPINNER_MS = 150;
-const LINE_MS = 18;
+// Every visit plays a Claude Code–style "thinking" spinner, then streams the
+// visible text in. Streaming takes ~STREAM_TICKS ticks regardless of length.
+const SPINNER_MS = 320;
+const SPINNER_FRAME_MS = 80;
+const TICK_MS = 20;
+const STREAM_TICKS = 22;
+const WHEEL_LINES = 2;
+
+const SPINNER = ["·", "✢", "✳", "✶", "✻", "✽", "✻", "✶", "✳", "✢"];
 
 interface ScreenViewProps {
   title: string;
-  /** One terminal row per entry; pre-wrap long text with `wrapText`. */
-  lines: React.ReactNode[];
+  /** Spinner text, e.g. "Recalling". */
+  verb: string;
+  lines: Line[];
   width: number;
   height: number;
-  animate: boolean;
   /** Disable j/k scrolling, e.g. while a text input owns the keyboard. */
   scrollKeys?: boolean;
-  /** Rendered under the lines once revealed; not scrolled. */
+  /** Rendered under the lines once streaming is done; not scrolled. */
   footer?: React.ReactNode;
 }
 
 export default function ScreenView({
   title,
+  verb,
   lines,
   width,
   height,
-  animate,
   scrollKeys = true,
   footer,
 }: ScreenViewProps) {
@@ -34,30 +40,33 @@ export default function ScreenView({
   const overflow = lines.length > bodyHeight;
   const maxScroll = Math.max(0, lines.length - bodyHeight);
 
-  const [loading, setLoading] = useState(animate);
-  const [revealed, setRevealed] = useState(animate ? 0 : Infinity);
+  const [frame, setFrame] = useState<number | null>(0);
+  const [chars, setChars] = useState(0);
   const [scroll, setScroll] = useState(0);
 
+  const visibleLines = lines.slice(scroll, scroll + bodyHeight);
+  const total = visibleLines.reduce((n, l) => n + lineLength(l), 0);
+  const done = chars === Infinity;
+
   useEffect(() => {
-    if (!animate) return;
-    let id: ReturnType<typeof setInterval> | undefined;
-    const t = setTimeout(() => {
-      setLoading(false);
-      // Only lines inside the viewport are worth animating.
-      const target = Math.min(lines.length, bodyHeight);
-      id = setInterval(() => {
-        setRevealed((r) => {
-          if (r + 1 >= target) {
-            clearInterval(id);
-            return Infinity;
-          }
-          return r + 1;
+    const spin = setInterval(() => setFrame((f) => (f === null ? f : f + 1)), SPINNER_FRAME_MS);
+    let stream: ReturnType<typeof setInterval> | undefined;
+    const start = setTimeout(() => {
+      clearInterval(spin);
+      setFrame(null);
+      const step = Math.max(4, Math.ceil(total / STREAM_TICKS));
+      stream = setInterval(() => {
+        setChars((c) => {
+          if (c + step < total) return c + step;
+          clearInterval(stream);
+          return Infinity;
         });
-      }, LINE_MS);
+      }, TICK_MS);
     }, SPINNER_MS);
     return () => {
-      clearTimeout(t);
-      clearInterval(id);
+      clearInterval(spin);
+      clearTimeout(start);
+      clearInterval(stream);
     };
   }, []);
 
@@ -65,20 +74,40 @@ export default function ScreenView({
     setScroll((s) => Math.min(s, maxScroll));
   }, [maxScroll]);
 
-  const done = revealed === Infinity;
+  const scrollBy = useCallback(
+    (delta: number) => setScroll((s) => Math.max(0, Math.min(maxScroll, s + delta))),
+    [maxScroll]
+  );
+
   useInput(
     (input, key) => {
-      if (input === "j" || key.pageDown) {
-        setScroll((s) => Math.min(maxScroll, s + (key.pageDown ? bodyHeight - 1 : 1)));
-      } else if (input === "k" || key.pageUp) {
-        setScroll((s) => Math.max(0, s - (key.pageUp ? bodyHeight - 1 : 1)));
-      }
+      if (input === "j") scrollBy(1);
+      else if (input === "k") scrollBy(-1);
+      else if (key.pageDown) scrollBy(bodyHeight - 1);
+      else if (key.pageUp) scrollBy(-(bodyHeight - 1));
     },
     { isActive: scrollKeys && overflow && done }
   );
 
+  const onMouse = useCallback(
+    (e: MouseEvent) => {
+      if (e.type === "wheelDown") scrollBy(WHEEL_LINES);
+      else if (e.type === "wheelUp") scrollBy(-WHEEL_LINES);
+    },
+    [scrollBy]
+  );
+  useMouse(onMouse, overflow && done);
+
   const rule = "─".repeat(Math.max(0, width - title.length - 1));
-  const visible = lines.slice(scroll, scroll + bodyHeight).slice(0, revealed);
+
+  // While streaming, show the first `chars` characters of the viewport.
+  let budget = done ? Infinity : chars;
+  const shown: Line[] = [];
+  for (const line of visibleLines) {
+    if (budget <= 0) break;
+    shown.push(sliceLine(line, budget));
+    budget -= Math.max(1, lineLength(line));
+  }
 
   return (
     <Box flexDirection="column" width={width} height={height}>
@@ -87,15 +116,31 @@ export default function ScreenView({
         <Text color={theme.muted} dimColor>{" " + rule}</Text>
       </Text>
       <Text> </Text>
-      {loading ? (
-        <PixelSpinner />
+      {frame !== null ? (
+        <Text>
+          <Text color={theme.claude}>{SPINNER[frame % SPINNER.length]} </Text>
+          <Text color={theme.claude}>{verb}…</Text>
+        </Text>
       ) : (
         <Box flexDirection="row">
           <Box flexDirection="column" width={overflow ? width - 2 : width}>
-            {visible.map((line, i) => (
-              <Box key={scroll + i} height={1} overflow="hidden">
-                {typeof line === "string" ? <Text>{line || " "}</Text> : line}
-              </Box>
+            {shown.map((line, i) => (
+              <Text key={scroll + i} wrap="truncate">
+                {line.length === 0
+                  ? " "
+                  : line.map((s, j) => (
+                      <Text
+                        key={j}
+                        color={s.color}
+                        backgroundColor={s.bg}
+                        bold={s.bold}
+                        italic={s.italic}
+                        dimColor={s.dim}
+                      >
+                        {s.text}
+                      </Text>
+                    ))}
+              </Text>
             ))}
           </Box>
           {overflow && done && (
@@ -125,21 +170,4 @@ function Scrollbar({ height, offset, total }: { height: number; offset: number; 
       )}
     </>
   );
-}
-
-/** Word-wrap `text` into lines no wider than `width` columns. */
-export function wrapText(text: string, width: number): string[] {
-  const out: string[] = [];
-  let line = "";
-  for (const word of text.split(/\s+/)) {
-    if (!word) continue;
-    if (!line) line = word;
-    else if (line.length + 1 + word.length <= width) line += " " + word;
-    else {
-      out.push(line);
-      line = word;
-    }
-  }
-  if (line) out.push(line);
-  return out;
 }
