@@ -1,66 +1,48 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React from "react";
 import { Box, Text } from "ink";
-import PixelSpinner from "../components/PixelSpinner";
-import ScrollView from "../components/ScrollView";
+import ScreenView from "../components/ScreenView";
 import TechIcon from "../components/TechIcon";
 import iconColorsRaw from "../data/techIconColors.json";
 import { getSkillsByCategory } from "../data/skills";
 import type { Skill } from "../data/skills";
 import type { Icon2x2Colors } from "../components/TechIcon";
+import { theme } from "../theme";
+import type { ScreenProps } from "./types";
 
 const iconColors = iconColorsRaw as unknown as Record<string, Icon2x2Colors>;
 
-const SKILLS_PER_ROW = 5;
-const GAP = 5;
+const GAP = 4;
+// Fixed column width so skills line up across rows and categories.
+const CELL = 16;
 
-function skillLine(skill: Skill): React.ReactNode {
-  const colors = iconColors[skill.name];
+function SkillCell({ skill }: { skill: Skill }) {
+  const c = skill.color;
   return (
-    <Box key={skill.name} flexDirection="row" gap={1}>
-      {colors ? <TechIcon colors={colors} /> : <Text color={skill.color}>??</Text>}
+    <Box width={CELL} gap={1}>
+      <TechIcon colors={iconColors[skill.name] ?? [c, c, c, c]} />
       <Text bold color={skill.color}>{skill.name}</Text>
     </Box>
   );
 }
 
-export default function Skills({ maxLines }: { maxLines: number }) {
-  const [stage, setStage] = useState<"loading" | "streaming">("loading");
+export default function Skills({ width, height, animate }: ScreenProps) {
+  const perRow = Math.max(1, Math.floor((width - 2 + GAP) / (CELL + GAP)));
+  const lines: React.ReactNode[] = [];
 
-  useEffect(() => {
-    const t = setTimeout(() => setStage("streaming"), 200);
-    return () => clearTimeout(t);
-  }, []);
-
-  const lines = useMemo(() => {
-    const byCategory = getSkillsByCategory();
-    const result: React.ReactNode[] = [
-      <Text key="title" bold color="cyan">Skills</Text>,
-      " ",
-    ];
-
-    for (const [category, categorySkills] of byCategory) {
-      result.push(
-        <Text key={`cat-${category}`} bold color="white" underline>
-          {category}
-        </Text>
+  for (const [category, categorySkills] of getSkillsByCategory()) {
+    if (categorySkills.length === 0) continue;
+    if (lines.length > 0) lines.push("");
+    lines.push(<Text bold color={theme.heading}>{category}</Text>);
+    for (let i = 0; i < categorySkills.length; i += perRow) {
+      lines.push(
+        <Box gap={GAP} paddingLeft={1}>
+          {categorySkills.slice(i, i + perRow).map((s) => (
+            <SkillCell key={s.name} skill={s} />
+          ))}
+        </Box>
       );
-      result.push(" ");
-
-      for (let i = 0; i < categorySkills.length; i += SKILLS_PER_ROW) {
-        const row = categorySkills.slice(i, i + SKILLS_PER_ROW);
-        result.push(
-          <Box key={`row-${category}-${i}`} flexDirection="row" gap={GAP}>
-            {row.map(skillLine)}
-          </Box>
-        );
-      }
-      result.push(" ");
     }
+  }
 
-    return result;
-  }, []);
-
-  if (stage === "loading") return <PixelSpinner />;
-
-  return <ScrollView maxHeight={maxLines} lines={lines} stream />;
+  return <ScreenView title="Skills" lines={lines} width={width} height={height} animate={animate} />;
 }

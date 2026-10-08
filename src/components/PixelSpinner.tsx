@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Text } from "ink";
+import { theme } from "../theme";
 
 const SPEED = 40;
 
@@ -17,9 +18,9 @@ export default function PixelSpinner() {
 
   return (
     <Text>
-      <Text color="cyan">{frames[frame]}</Text>
+      <Text color={theme.accent}>{frames[frame]}</Text>
       {" "}
-      <Text color="gray">loading...</Text>
+      <Text color={theme.muted}>loading...</Text>
     </Text>
   );
 }

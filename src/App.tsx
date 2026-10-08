@@ -1,87 +1,117 @@
-import React, { useState, useMemo, useRef } from "react";
-import { Box, Text, useInput, useApp, useStdout } from "ink";
-import Header from "./components/Header";
+import React, { useCallback, useRef, useState } from "react";
+import { Box, useApp, useInput } from "ink";
+import Header, { headerHeight } from "./components/Header";
 import Menu from "./components/Menu";
+import Footer from "./components/Footer";
 import About from "./screens/About";
-import Skills from "./screens/Skills";
 import Experience from "./screens/Experience";
+import Projects from "./screens/Projects";
+import Skills from "./screens/Skills";
 import Contact from "./screens/Contact";
+import { useTerminalSize } from "./hooks/useTerminalSize";
+import { theme } from "./theme";
 
-type ScreenId = "about" | "skills" | "experience" | "contact";
-const menuItems = ["About Me", "Skills", "Experience", "Contact"];
-const screenMap: Record<string, ScreenId> = {
-  "About Me": "about",
-  Skills: "skills",
-  Experience: "experience",
-  Contact: "contact",
-};
+const screens = [
+  { id: "about", label: "About Me" },
+  { id: "experience", label: "Experience" },
+  { id: "projects", label: "Projects" },
+  { id: "skills", label: "Skills" },
+  { id: "contact", label: "Contact" },
+] as const;
+const menuItems = screens.map((s) => s.label);
 
-const HEADER_LINES = 9;
+const SIDEBAR_WIDTH = 15;
+const EXIT_PROMPT_MS = 3000;
 
 export default function App() {
   const { exit } = useApp();
-  const { stdout } = useStdout();
+  const { columns, rows } = useTerminalSize();
   const [menuIndex, setMenuIndex] = useState(0);
   const [showExitPrompt, setShowExitPrompt] = useState(false);
-  const escRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const screen = screenMap[menuItems[menuIndex]];
+  const exitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const visited = useRef(new Set<string>());
+  const [draft, setDraft] = useState("");
+  const [gmailUrl, setGmailUrl] = useState<string | null>(null);
 
-  const contentHeight = useMemo(() => {
-    const rows = stdout?.rows ?? 24;
-    return Math.max(5, rows - HEADER_LINES - 1);
-  }, [stdout?.rows]);
+  const screen = screens[menuIndex].id;
+  // Animate a screen only the first time it is opened.
+  const animate = !visited.current.has(screen);
+  visited.current.add(screen);
 
-  useInput((_input, key) => {
-    if (key.escape) {
-      if (escRef.current) {
-        clearTimeout(escRef.current);
-        escRef.current = null;
+  const onSubmit = useCallback((url: string) => {
+    setGmailUrl(url);
+    setDraft("");
+  }, []);
+
+  useInput((input, key) => {
+    // Two-phase exit: the first esc/ctrl+c shows a prompt, the second quits.
+    if (key.escape || (key.ctrl && input === "c")) {
+      if (exitTimer.current) {
+        clearTimeout(exitTimer.current);
         exit();
-      } else {
-        setShowExitPrompt(true);
-        escRef.current = setTimeout(() => {
-          escRef.current = null;
-          setShowExitPrompt(false);
-        }, 3000);
+        return;
       }
+      setShowExitPrompt(true);
+      exitTimer.current = setTimeout(() => {
+        exitTimer.current = null;
+        setShowExitPrompt(false);
+      }, EXIT_PROMPT_MS);
       return;
     }
-    if (key.upArrow) {
-      setMenuIndex((i) => (i - 1 + menuItems.length) % menuItems.length);
-    } else if (key.downArrow) {
-      setMenuIndex((i) => (i + 1) % menuItems.length);
+
+    const n = screens.length;
+    if (key.upArrow || (key.tab && key.shift)) {
+      setMenuIndex((i) => (i - 1 + n) % n);
+    } else if (key.downArrow || key.tab) {
+      setMenuIndex((i) => (i + 1) % n);
+    } else if (screen !== "contact" && /^[1-9]$/.test(input) && Number(input) <= n) {
+      // Digits are typed into the message box on the Contact screen.
+      setMenuIndex(Number(input) - 1);
     }
   });
 
+  // Ink clears and repaints the whole terminal on every frame when output
+  // fills all rows, so leave the last row free to keep incremental updates.
+  const height = rows - 1;
+  const header = headerHeight(columns, height);
+  const bodyHeight = Math.max(5, height - header - 1);
+  const contentWidth = Math.max(20, columns - SIDEBAR_WIDTH - 4);
+  const props = { width: contentWidth, height: bodyHeight, animate };
+
   return (
-    <Box flexDirection="column" height={stdout?.rows ?? 24}>
-      <Header />
-      <Box flexDirection="row" marginTop={1} height={contentHeight}>
-        <Box flexDirection="column" marginRight={4} flexShrink={0} width={16}>
+    <Box flexDirection="column" width={columns} height={height}>
+      <Header columns={columns} rows={height} />
+      <Box flexDirection="row" height={bodyHeight}>
+        <Box
+          flexDirection="column"
+          flexShrink={0}
+          width={SIDEBAR_WIDTH}
+          borderStyle="single"
+          borderColor={theme.muted}
+          borderDimColor
+          borderTop={false}
+          borderBottom={false}
+          borderLeft={false}
+        >
           <Menu items={menuItems} selectedIndex={menuIndex} />
         </Box>
-        <Box flexDirection="column" flexGrow={1}>
-          <Box key={menuIndex} flexDirection="column">
-            {screen === "about" && <About />}
-            {screen === "skills" && <Skills maxLines={contentHeight} />}
-            {screen === "experience" && <Experience />}
-            {screen === "contact" && <Contact />}
-          </Box>
+        <Box key={screen} flexDirection="column" marginLeft={2} flexGrow={1}>
+          {screen === "about" && <About {...props} />}
+          {screen === "experience" && <Experience {...props} />}
+          {screen === "projects" && <Projects {...props} />}
+          {screen === "skills" && <Skills {...props} />}
+          {screen === "contact" && (
+            <Contact
+              {...props}
+              draft={draft}
+              onDraftChange={setDraft}
+              gmailUrl={gmailUrl}
+              onSubmit={onSubmit}
+            />
+          )}
         </Box>
       </Box>
-      <Box flexDirection="column">
-        {showExitPrompt && (
-          <Box>
-            <Text color="yellow" bold>
-              {"  Press esc again to exit"}
-            </Text>
-          </Box>
-        )}
-        <Box>
-          <Text color="dim">It runs on free server, sorry it is a bit slow.</Text>
-          <Text color="dim">  無料サーバーを使用しているため、少し遅いです。すみません。</Text>
-        </Box>
-      </Box>
+      <Footer columns={columns} exitPrompt={showExitPrompt} />
     </Box>
   );
 }

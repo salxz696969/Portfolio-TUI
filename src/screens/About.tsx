@@ -1,27 +1,28 @@
-import React, { useEffect, useState } from "react";
-import { Box, Text } from "ink";
-import PixelSpinner from "../components/PixelSpinner";
-import StreamingText from "../components/StreamingText";
-import { aboutText } from "../data/content";
+import React from "react";
+import { Text } from "ink";
+import ScreenView, { wrapText } from "../components/ScreenView";
+import { aboutParagraphs, quickFacts } from "../data/content";
+import { theme } from "../theme";
+import type { ScreenProps } from "./types";
 
-export default function About() {
-  const [stage, setStage] = useState<"loading" | "streaming" | "done">("loading");
+export default function About({ width, height, animate }: ScreenProps) {
+  const textWidth = Math.min(width, 76);
+  const lines: React.ReactNode[] = [];
 
-  useEffect(() => {
-    const t = setTimeout(() => setStage("streaming"), 200);
-    return () => clearTimeout(t);
-  }, []);
+  aboutParagraphs.forEach((p, i) => {
+    if (i > 0) lines.push("");
+    lines.push(...wrapText(p, textWidth));
+  });
 
-  return (
-    <Box flexDirection="column">
-      {stage === "loading" && <PixelSpinner />}
-      {(stage === "streaming" || stage === "done") && (
-        <>
-          <Text bold color="cyan">About Me</Text>
-          <Text> </Text>
-          <StreamingText text={aboutText} onDone={() => setStage("done")} />
-        </>
-      )}
-    </Box>
-  );
+  lines.push("");
+  for (const [label, value] of quickFacts) {
+    lines.push(
+      <Text>
+        <Text color={theme.accent}>{"  " + label.padEnd(10)}</Text>
+        <Text>{value}</Text>
+      </Text>
+    );
+  }
+
+  return <ScreenView title="About Me" lines={lines} width={width} height={height} animate={animate} />;
 }

@@ -1,61 +1,70 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Box, Text } from "ink";
-import PixelSpinner from "../components/PixelSpinner";
-import StreamingText from "../components/StreamingText";
+import ScreenView from "../components/ScreenView";
 import EmailForm from "../components/EmailForm";
+import Link from "../components/Link";
 import { contactInfo } from "../data/content";
+import { theme } from "../theme";
+import type { ScreenProps } from "./types";
 
-const contactText = `  Phone     ${contactInfo.phone}
-  Email     ${contactInfo.email}`;
+interface ContactProps extends ScreenProps {
+  draft: string;
+  onDraftChange: (value: string) => void;
+  gmailUrl: string | null;
+  onSubmit: (url: string) => void;
+}
 
-export default function Contact() {
-  const [stage, setStage] = useState<"loading" | "streaming" | "done">("loading");
-  const [gmailUrl, setGmailUrl] = useState<string | null>(null);
+const rows: [label: string, value: string, url?: string][] = [
+  ["Phone", contactInfo.phone, `tel:${contactInfo.phone.replace(/\s/g, "")}`],
+  ["Email", contactInfo.email, `mailto:${contactInfo.email}`],
+  ["LinkedIn", contactInfo.linkedin, contactInfo.linkedin],
+  ["GitHub", contactInfo.github, contactInfo.github],
+];
 
-  useEffect(() => {
-    const t = setTimeout(() => setStage("streaming"), 200);
-    return () => clearTimeout(t);
-  }, []);
+export default function Contact({ width, height, animate, draft, onDraftChange, gmailUrl, onSubmit }: ContactProps) {
+  const lines: React.ReactNode[] = rows.map(([label, value, url]) => (
+    <Box>
+      <Text color={theme.accent}>{"  " + label.padEnd(10)}</Text>
+      {url ? <Link url={url} wrap="truncate">{value}</Link> : <Text>{value}</Text>}
+    </Box>
+  ));
+  lines.push("", <Text color={theme.muted} dimColor>{"  ctrl/⌘ + click a link to open it"}</Text>);
 
-  return (
-    <Box flexDirection="column">
-      {stage === "loading" && <PixelSpinner />}
-      {(stage === "streaming" || stage === "done") && (
-        <>
-          <Text bold color="cyan">Contact</Text>
-          <Text> </Text>
-          <StreamingText text={contactText} onDone={() => setStage("done")} />
-          {stage === "done" && (
-            <>
-              <Text>  LinkedIn  <Text color="cyan" underline>{contactInfo.linkedin}</Text></Text>
-              <Text>  GitHub    <Text color="cyan" underline>{contactInfo.github}</Text></Text>
-              <Text> </Text>
-              <Text color="dim">  Note: ctrl + click / ⌘ + click to open</Text>
-              <Text> </Text>
-              <Text> </Text>
-              <Box marginTop={1} flexDirection="column" borderStyle="round" borderColor="cyan" paddingLeft={1} paddingRight={1} width={60}>
-                <Text color="gray">Write me a message (enter to send via email):</Text>
-                <Text> </Text>
-                <Box flexDirection="row">
-                  <Text color="cyan">{"> "}</Text>
-                  <EmailForm onSubmitted={(url) => setGmailUrl(url)} />
-                </Box>
-              </Box>
-              {gmailUrl && (
-                <Box marginTop={1} flexDirection="column">
-                  <Text>
-                    {"  "}
-                    <Text color="green">✓ Message ready — </Text>
-                    <Text color="cyan">  {gmailUrl}</Text>
-                  </Text>
-                  <Text> </Text>
-                  <Text color="dim">  Note: ctrl + click / ⌘ + click to open gmail</Text>
-                </Box>
-              )}
-            </>
-          )}
-        </>
+  const footer = (
+    <Box flexDirection="column" marginTop={1}>
+      <Box
+        flexDirection="column"
+        borderStyle="round"
+        borderColor={theme.accent}
+        paddingX={1}
+        width={Math.min(width, 64)}
+      >
+        <Text color={theme.muted}>Write me a message · enter to send via Gmail</Text>
+        <Box>
+          <Text color={theme.accent}>{"> "}</Text>
+          <EmailForm value={draft} onChange={onDraftChange} onSubmit={onSubmit} />
+        </Box>
+      </Box>
+      {gmailUrl && (
+        <Box marginTop={1} paddingLeft={2}>
+          <Text color={theme.success}>✓ Draft ready → </Text>
+          <Link url={gmailUrl} color={theme.accent} underline>
+            open it in Gmail
+          </Link>
+        </Box>
       )}
     </Box>
+  );
+
+  return (
+    <ScreenView
+      title="Contact"
+      lines={lines}
+      width={width}
+      height={height}
+      animate={animate}
+      scrollKeys={false}
+      footer={footer}
+    />
   );
 }

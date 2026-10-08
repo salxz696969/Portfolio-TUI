@@ -1,34 +1,31 @@
-import React from "react";
+import React, { memo } from "react";
 import { Text } from "ink";
+import { theme } from "../theme";
 
 interface MenuProps {
   items: string[];
   selectedIndex: number;
 }
 
-export default function Menu({ items, selectedIndex }: MenuProps) {
+function Menu({ items, selectedIndex }: MenuProps) {
   return (
     <>
       {items.map((item, i) => {
         const isSelected = i === selectedIndex;
-        return (
-          <Text key={item}>
-            {isSelected ? (
-              <Text color="cyan" bold>
-                {"  ❯ "}
-                {item}
-              </Text>
-            ) : (
-              <Text color="gray">{"    "}{item}</Text>
-            )}
+        return isSelected ? (
+          <Text key={item} color={theme.accent} bold>
+            {" ❯ "}
+            {item}
+          </Text>
+        ) : (
+          <Text key={item} color={theme.muted}>
+            {"   "}
+            {item}
           </Text>
         );
       })}
-      <Text> </Text>
-      <Text> </Text>
-      <Text> </Text>
-      <Text color="dim">  ↑↓  navigate</Text>
-      <Text color="dim">  esc exit</Text>
     </>
   );
 }
+
+export default memo(Menu);
