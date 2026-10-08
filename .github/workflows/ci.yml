@@ -27,13 +27,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm build
       - name: Smoke test (run the bundle in a pseudo-terminal)
-        run: |
-          out=$(timeout 3 script -qec "node dist/main.js" /dev/null </dev/null || true)
-          if ! grep -q "Hello! I'm Sao Visal" <<<"$out"; then
-            echo "::error::App did not render the About screen"
-            echo "$out" | tail -40
-            exit 1
-          fi
+        run: python3 scripts/smoke-test.py
 
   docker:
     name: Docker image
