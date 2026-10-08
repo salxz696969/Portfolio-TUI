@@ -72,3 +72,7 @@ scripts/
 | `tsx` | Dev TypeScript runner |
 | `esbuild` | Production bundle |
 | `devicon`, `sharp` | (dev) logo source + rasterizer for `generate:icons` |
+
+## CI / CD
+
+`.github/workflows/ci.yml` runs on pushes to `main` and on pull requests: typecheck, `pnpm build`, a smoke test that runs the bundle in a pseudo-terminal and checks the About screen renders, then a Docker build that serves the image through ttyd. Render deploys `main`; set its Auto-Deploy to "After CI Checks Pass" so a failing commit never goes live.

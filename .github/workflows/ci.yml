@@ -1,0 +1,58 @@
+name: CI
+
+# Runs on every push to main and every pull request. Render deploys main;
+# with its Auto-Deploy setting on "After CI Checks Pass", a commit only goes
+# live once these jobs succeed.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Typecheck, build, smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm build
+      - name: Smoke test (run the bundle in a pseudo-terminal)
+        run: |
+          out=$(timeout 3 script -qec "node dist/main.js" /dev/null </dev/null || true)
+          if ! grep -q "Hello! I'm Sao Visal" <<<"$out"; then
+            echo "::error::App did not render the About screen"
+            echo "$out" | tail -40
+            exit 1
+          fi
+
+  docker:
+    name: Docker image
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: portfolio-tui:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Serve through ttyd
+        run: |
+          docker run -d --rm -p 7681:7681 --name portfolio portfolio-tui:ci
+          for i in $(seq 1 20); do curl -fsS localhost:7681 >/dev/null && exit 0; sleep 1; done
+          docker logs portfolio
+          exit 1
